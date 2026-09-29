@@ -40,6 +40,8 @@ namespace GLTFast.Materials {
 
     public class ShaderGraphMaterialGenerator : MaterialGenerator {
 
+        const string k_SpecularSetupKeyword = "_SPECULAR_SETUP";
+
         [Flags]
         protected enum ShaderMode {
             Opaque = 0,
@@ -212,6 +214,7 @@ namespace GLTFast.Materials {
                     materialType = MaterialType.SpecularGlossiness;
                     var specularShaderFeatures = GetSpecularShaderFeatures(gltfMaterial);
                     material = GetSpecularMaterial(specularShaderFeatures);
+                    material?.EnableKeyword(k_SpecularSetupKeyword);
                     if ((specularShaderFeatures & SpecularShaderFeatures.AlphaBlend) != 0) {
                         shaderMode = ShaderMode.Blend;
                     }
