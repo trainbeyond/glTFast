@@ -54,6 +54,10 @@ namespace GLTFast
         /// </summary>
         TextureBasisUniversal,
         /// <summary>
+        /// <see href="https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_webp/README.md">EXT_texture_webp</see> glTF extension
+        /// </summary>
+        TextureWebP,
+        /// <summary>
         /// <see href="https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md">KHR_texture_transform</see> glTF extension
         /// </summary>
         TextureTransform,
@@ -97,6 +101,10 @@ namespace GLTFast
         /// </summary>
         public const string TextureBasisUniversal = "KHR_texture_basisu";
         /// <summary>
+        /// <see href="https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_texture_webp/README.md">EXT_texture_webp</see> glTF extension
+        /// </summary>
+        public const string TextureWebP = "EXT_texture_webp";
+        /// <summary>
         /// <see href="https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md">KHR_texture_transform</see> glTF extension
         /// </summary>
         public const string TextureTransform = "KHR_texture_transform";
@@ -130,6 +138,8 @@ namespace GLTFast
                     return MeshQuantization;
                 case Extension.TextureBasisUniversal:
                     return TextureBasisUniversal;
+                case Extension.TextureWebP:
+                    return TextureWebP;
                 case Extension.TextureTransform:
                     return TextureTransform;
                 default:

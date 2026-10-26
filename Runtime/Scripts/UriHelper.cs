@@ -177,6 +177,7 @@ namespace GLTFast
             if (fileExtension.Equals("png", StringComparison.OrdinalIgnoreCase)) return ImageFormat.PNG;
             if (fileExtension.Equals("jpg", StringComparison.OrdinalIgnoreCase) || fileExtension.Equals("jpeg", StringComparison.OrdinalIgnoreCase)) return ImageFormat.Jpeg;
             if (fileExtension.Equals("ktx", StringComparison.OrdinalIgnoreCase) || fileExtension.Equals("ktx2", StringComparison.OrdinalIgnoreCase)) return ImageFormat.Ktx;
+            if (fileExtension.Equals("webp", StringComparison.OrdinalIgnoreCase)) return ImageFormat.WebP;
             return ImageFormat.Unknown;
         }
 

@@ -50,6 +50,10 @@ namespace GLTFast.Schema
                 {
                     return extensions.KHR_texture_basisu.source;
                 }
+                if (extensions.EXT_texture_webp != null && extensions.EXT_texture_webp.source >= 0)
+                {
+                    return extensions.EXT_texture_webp.source;
+                }
             }
             return source;
         }
@@ -58,6 +62,11 @@ namespace GLTFast.Schema
         /// True, if the texture is of the KTX format.
         /// </summary>
         public bool IsKtx => extensions?.KHR_texture_basisu != null;
+
+        /// <summary>
+        /// True if this texture selects a WebP image through EXT_texture_webp.
+        /// </summary>
+        public bool IsWebP => extensions?.EXT_texture_webp != null;
 
         internal void GltfSerialize(JsonWriter writer)
         {

@@ -147,7 +147,6 @@ Not investigated yet:
 - KHR_techniques_webgl (archived)
 - ADOBE_materials_clearcoat_specular (prefer KHR_materials_clearcoat)
 - ADOBE_materials_thin_transparency (prefer KHR_materials_transmission)
-- EXT_texture_webp (prefer KTX/basisu)
 - FB_geometry_metadata (prefer KTX_xmp)
 - MSFT_texture_dds (prefer KTX/basisu)
 

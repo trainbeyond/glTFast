@@ -27,6 +27,10 @@ namespace GLTFast.Schema
         // ReSharper disable once InconsistentNaming
         public TextureBasisUniversal KHR_texture_basisu;
 
+        /// <inheritdoc cref="TextureWebP"/>
+        // ReSharper disable once InconsistentNaming
+        public TextureWebP EXT_texture_webp;
+
         internal void GltfSerialize(JsonWriter writer)
         {
             throw new System.NotImplementedException($"GltfSerialize missing on {GetType()}");
@@ -44,6 +48,18 @@ namespace GLTFast.Schema
         /// <summary>
         /// Index of the image which defines a reference to the KTX v2 image
         /// with Basis Universal super-compression.
+        /// </summary>
+        public int source = -1;
+    }
+
+    /// <summary>
+    /// WebP texture extension.
+    /// </summary>
+    [System.Serializable]
+    public class TextureWebP
+    {
+        /// <summary>
+        /// Index of the image containing WebP data.
         /// </summary>
         public int source = -1;
     }
