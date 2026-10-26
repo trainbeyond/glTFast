@@ -3327,9 +3327,12 @@ namespace GLTFast
                 var acc = gltf.Accessors[i];
                 if (acc.bufferView < 0)
                 {
-                    // Not actual accessor to data
-                    // Common for draco meshes
-                    // the accessor only holds meta information
+                    // Accessors without a bufferView are normally metadata for
+                    // compressed meshes. For animation data, however, glTF 2.0
+                    // defines the missing base buffer as zero-initialized.
+                    m_AccessorData[i] = AccessorDataFactory.CreateZeroInitializedAnimationData(
+                        acc.GetAttributeType(), m_AccessorUsage[i], acc.count
+                    );
                     continue;
                 }
                 switch (acc.GetAttributeType())
