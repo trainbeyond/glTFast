@@ -1207,7 +1207,12 @@ namespace GLTFast
                                 // Not Inside buffer
                                 if (!string.IsNullOrEmpty(img.uri))
                                 {
-                                    LoadImage(imageIndex, UriHelper.GetUriString(img.uri, baseUri), !m_ImageReadable[imageIndex], imgFormat == ImageFormat.Ktx);
+                                    LoadImage(
+                                        imageIndex,
+                                        UriHelper.GetUriString(img.uri, baseUri),
+                                        !m_ImageReadable[imageIndex],
+                                        imgFormat == ImageFormat.Ktx
+                                    );
                                 }
                                 else
                                 {
@@ -1247,13 +1252,22 @@ namespace GLTFast
             }
 
             m_ImageFormats[imageIndex] = imgFormat;
-            if (m_ImageFormats[imageIndex] != ImageFormat.Jpeg && m_ImageFormats[imageIndex] != ImageFormat.PNG) {
+            if (m_ImageFormats[imageIndex] != ImageFormat.Jpeg
+                && m_ImageFormats[imageIndex] != ImageFormat.PNG
+                && m_ImageFormats[imageIndex] != ImageFormat.WebP) {
                 // TODO: support embed KTX textures
                 m_Logger?.Error(LogCode.EmbedImageUnsupportedType, m_ImageFormats[imageIndex].ToString());
+                return;
+            }
+
+            bool forceSampleLinear = m_ImageGamma != null && !m_ImageGamma[imageIndex];
+            if (m_ImageFormats[imageIndex] == ImageFormat.WebP) {
+                m_Images[imageIndex] = DecodeWebP(data, imageIndex, forceSampleLinear);
+                Profiler.EndSample();
+                return;
             }
 
             // TODO: Investigate alternative: native texture creation in worker thread
-            bool forceSampleLinear = m_ImageGamma != null && !m_ImageGamma[imageIndex];
             var txt = CreateEmptyTexture(img, imageIndex, forceSampleLinear);
             txt.LoadImage(data,!m_ImageReadable[imageIndex]);
             m_Images[imageIndex] = txt;
@@ -1327,9 +1341,16 @@ namespace GLTFast
                     {
 #if UNITY_IMAGECONVERSION
                         var forceSampleLinear = m_ImageGamma!=null && !m_ImageGamma[imageIndex];
-                        txt = CreateEmptyTexture(m_GltfRoot.images[imageIndex], imageIndex, forceSampleLinear);
-                        // TODO: Investigate for NativeArray variant to avoid `www.data`
-                        txt.LoadImage(www.Data,!m_ImageReadable[imageIndex]);
+                        if (m_ImageFormats[imageIndex] == ImageFormat.WebP)
+                        {
+                            txt = DecodeWebP(www.Data, imageIndex, forceSampleLinear);
+                        }
+                        else
+                        {
+                            txt = CreateEmptyTexture(m_GltfRoot.images[imageIndex], imageIndex, forceSampleLinear);
+                            // TODO: Investigate for NativeArray variant to avoid `www.data`
+                            txt.LoadImage(www.Data,!m_ImageReadable[imageIndex]);
+                        }
 #else
                         m_Logger?.Warning(LogCode.ImageConversionNotEnabled);
                         txt = null;
@@ -1505,7 +1526,9 @@ namespace GLTFast
 #endif
 #if UNITY_WEBREQUEST_TEXTURE
             var forceSampleLinear = m_ImageGamma != null && !m_ImageGamma[imageIndex];
-            return forceSampleLinear || m_Settings.GenerateMipMaps;
+            return m_ImageFormats[imageIndex] == ImageFormat.WebP
+                || forceSampleLinear
+                || m_Settings.GenerateMipMaps;
 #else
             m_Logger?.Warning(LogCode.UnityWebRequestTextureNotEnabled);
             return true;
@@ -1807,23 +1830,11 @@ namespace GLTFast
                             if (jh.imageFormat == ImageFormat.WebP)
                             {
                                 var forceSampleLinear = m_ImageGamma != null && !m_ImageGamma[jh.imageIndex];
-                                var texture = WebP.Texture2DExt.CreateTexture2DFromWebP(
+                                m_Images[jh.imageIndex] = DecodeWebP(
                                     jh.buffer,
-                                    m_Settings.GenerateMipMaps,
-                                    forceSampleLinear,
-                                    out var webPError,
-                                    makeNoLongerReadable: !m_ImageReadable[jh.imageIndex]
+                                    jh.imageIndex,
+                                    forceSampleLinear
                                 );
-                                if (webPError != WebP.Error.Success || texture == null)
-                                {
-                                    m_Logger?.Error(LogCode.TextureDownloadFailed, webPError.ToString(), jh.imageIndex.ToString());
-                                }
-                                else
-                                {
-                                    texture.name = GetImageName(m_GltfRoot.images[jh.imageIndex], jh.imageIndex);
-                                    m_Images[jh.imageIndex] = texture;
-                                    m_Resources.Add(texture);
-                                }
                             }
                             else
                             {
@@ -2706,6 +2717,25 @@ namespace GLTFast
                 name = GetImageName(img, index)
             };
             return txt;
+        }
+
+        Texture2D DecodeWebP(byte[] data, int imageIndex, bool forceSampleLinear)
+        {
+            var texture = WebP.Texture2DExt.CreateTexture2DFromWebP(
+                data,
+                m_Settings.GenerateMipMaps,
+                forceSampleLinear,
+                out var webPError,
+                makeNoLongerReadable: !m_ImageReadable[imageIndex]
+            );
+            if (webPError != WebP.Error.Success || texture == null)
+            {
+                m_Logger?.Error(LogCode.TextureDownloadFailed, webPError.ToString(), imageIndex.ToString());
+                return null;
+            }
+            texture.name = GetImageName(m_GltfRoot.images[imageIndex], imageIndex);
+            m_Resources.Add(texture);
+            return texture;
         }
 
         static string GetImageName(Image img, int index)
