@@ -5,6 +5,7 @@
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Jobs",
+        "unity.webp",
         "Draco",
         "Ktx",
         "Unity.Meshopt.Decompress",

@@ -115,6 +115,7 @@ namespace GLTFast
 #if KTX
             ExtensionName.TextureBasisUniversal,
 #endif // KTX_UNITY
+            ExtensionName.TextureWebP,
 #if MESHOPT
             ExtensionName.MeshoptCompression,
 #endif
@@ -1132,6 +1133,19 @@ namespace GLTFast
                 }
 #endif // KTX_UNITY
 
+                // EXT_texture_webp selects an image independently from the
+                // core texture.source fallback. Mark it before image loading
+                // so embedded WebP bytes use the WebP decoder.
+                for (int i = 0; i < m_GltfRoot.textures.Length; i++)
+                {
+                    var texture = m_GltfRoot.textures[i];
+                    if (texture.IsWebP)
+                    {
+                        var imgIndex = texture.GetImageIndex();
+                        m_ImageFormats[imgIndex] = ImageFormat.WebP;
+                    }
+                }
+
                 // Determine which images need to be readable, because they
                 // are applied using different samplers.
                 var imageVariants = new HashSet<int>[m_Images.Length];
@@ -1790,7 +1804,31 @@ namespace GLTFast
                         {
                             jh.jobHandle.Complete();
 #if UNITY_IMAGECONVERSION
-                            m_Images[jh.imageIndex].LoadImage(jh.buffer,!m_ImageReadable[jh.imageIndex]);
+                            if (jh.imageFormat == ImageFormat.WebP)
+                            {
+                                var forceSampleLinear = m_ImageGamma != null && !m_ImageGamma[jh.imageIndex];
+                                var texture = WebP.Texture2DExt.CreateTexture2DFromWebP(
+                                    jh.buffer,
+                                    m_Settings.GenerateMipMaps,
+                                    forceSampleLinear,
+                                    out var webPError,
+                                    makeNoLongerReadable: !m_ImageReadable[jh.imageIndex]
+                                );
+                                if (webPError != WebP.Error.Success || texture == null)
+                                {
+                                    m_Logger?.Error(LogCode.TextureDownloadFailed, webPError.ToString(), jh.imageIndex.ToString());
+                                }
+                                else
+                                {
+                                    texture.name = GetImageName(m_GltfRoot.images[jh.imageIndex], jh.imageIndex);
+                                    m_Images[jh.imageIndex] = texture;
+                                    m_Resources.Add(texture);
+                                }
+                            }
+                            else
+                            {
+                                m_Images[jh.imageIndex].LoadImage(jh.buffer,!m_ImageReadable[jh.imageIndex]);
+                            }
 #endif
                             jh.gcHandle.Free();
                             m_ImageCreateContexts.RemoveAt(i);
@@ -2608,9 +2646,9 @@ namespace GLTFast
                             var chunk = m_BinChunks[bufferView.buffer];
 
                             bool forceSampleLinear = m_ImageGamma != null && !m_ImageGamma[i];
-                            var txt = CreateEmptyTexture(img, i, forceSampleLinear);
                             var icc = new ImageCreateContext();
                             icc.imageIndex = i;
+                            icc.imageFormat = imgFormat;
                             icc.buffer = new byte[bufferView.byteLength];
                             icc.gcHandle = GCHandle.Alloc(icc.buffer, GCHandleType.Pinned);
 
@@ -2619,8 +2657,12 @@ namespace GLTFast
 
                             contexts.Add(icc);
 
-                            m_Images[i] = txt;
-                            m_Resources.Add(txt);
+                            if (imgFormat != ImageFormat.WebP)
+                            {
+                                var txt = CreateEmptyTexture(img, i, forceSampleLinear);
+                                m_Images[i] = txt;
+                                m_Resources.Add(txt);
+                            }
                             Profiler.EndSample();
                         }
                     }
@@ -3771,6 +3813,8 @@ namespace GLTFast
                 case "ktx":
                 case "ktx2":
                     return ImageFormat.Ktx;
+                case "webp":
+                    return ImageFormat.WebP;
                 default:
                     return ImageFormat.Unknown;
             }

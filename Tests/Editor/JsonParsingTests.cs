@@ -22,6 +22,27 @@ namespace GLTFast.Tests
     class JsonParsingTests
     {
         [Test]
+        public void WebPTextureExtensionSelectsExtensionImage()
+        {
+            var gltf = JsonParser.ParseJson(@"
+{
+    ""images"": [{""mimeType"": ""image/png""}, {""mimeType"": ""image/webp""}],
+    ""textures"": [{
+        ""source"": 0,
+        ""extensions"": {
+            ""EXT_texture_webp"": {""source"": 1}
+        }
+    }]
+}");
+
+            Assert.NotNull(gltf);
+            Assert.NotNull(gltf.textures);
+            Assert.AreEqual(1, gltf.textures.Length);
+            Assert.IsTrue(gltf.textures[0].IsWebP);
+            Assert.AreEqual(1, gltf.textures[0].GetImageIndex());
+        }
+
+        [Test]
         public void MaterialExtensions()
         {
             var gltf = JsonParser.ParseJson(@"

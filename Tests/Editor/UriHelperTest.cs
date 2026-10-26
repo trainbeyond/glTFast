@@ -22,6 +22,13 @@ namespace GLTFast.Tests
 {
     class UriHelperTest
     {
+        [TestCase("texture.webp")]
+        [TestCase("https://example.test/texture.WEBP?revision=1")]
+        public void DetectsWebPImageFormat(string uri)
+        {
+            Assert.AreEqual(ImageFormat.WebP, UriHelper.GetImageFormatFromUri(uri));
+        }
+
         static Uri[] s_Glb = {
             new Uri("file.glb",UriKind.RelativeOrAbsolute),
             new Uri("file:///dir/sub/file.glb",UriKind.RelativeOrAbsolute),

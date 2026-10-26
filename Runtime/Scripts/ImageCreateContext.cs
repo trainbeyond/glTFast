@@ -22,6 +22,7 @@ namespace GLTFast
     struct ImageCreateContext
     {
         public int imageIndex;
+        public ImageFormat imageFormat;
         public byte[] buffer;
         public GCHandle gcHandle;
         public JobHandle jobHandle;
